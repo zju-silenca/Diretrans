@@ -52,7 +52,7 @@ int EPoller::poll(int timeoutMs, ChannelList *activeChannels)
 void EPoller::updateChannel(Channel *channel)
 {
     assertInLoopThread();
-    LOG("fd = %p, events = %d", channel, channel->events());
+    LOG("fd = %d, events = %d", channel->fd(), channel->events());
     if (channel->index() < 0)
     {
         // new channel

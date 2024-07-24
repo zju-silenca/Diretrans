@@ -12,7 +12,7 @@ class Channel;
 class EventLoop;
 class Timestamp;
 
-class UdpCom : public std::enable_shared_from_this<UdpCom>
+class UdpCom
 {
 public:
     typedef std::function<void()> EventCallback;

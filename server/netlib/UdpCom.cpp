@@ -68,6 +68,10 @@ UdpCom::~UdpCom()
 int UdpCom::send(Buffer &buf, sockaddr &target)
 {
     ssize_t n = ::sendto(sockfd_, buf.peek(), buf.readableBytes(), 0, &target, sizeof(target));
+    if (n == -1)
+    {
+        LOG("sendto return -1, error no: %d", errno);
+    }
     if (n != buf.readableBytes())
     {
         LOG("Sendto %lu bytes but buf have %lu bytes", n, buf.readableBytes());
