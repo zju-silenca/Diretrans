@@ -82,8 +82,8 @@ int UdpCom::send(Buffer &buf, sockaddr &target)
 
 void UdpCom::handleRead()
 {
-    struct sockaddr sourceAddr;
-    socklen_t len;
+    struct sockaddr sourceAddr = {0};
+    socklen_t len = sizeof(struct sockaddr);
     Timestamp timestamp(Timestamp::now());
 
     assert(tmpbuf_.writableBytes() >= kBufferSize);
