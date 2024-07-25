@@ -32,11 +32,11 @@ private:
     void handleRead();
     MessageCallback messageCallback_;
     // closeCallback is no-need becauese udp is no-connection
-    int sockfd_;
     uint16_t port_;
     EventLoop* loop_;
-    Buffer tmpbuf_;
+    int sockfd_;
     std::unique_ptr<Channel> channel_;
+    Buffer tmpbuf_;
 };
 
 #endif

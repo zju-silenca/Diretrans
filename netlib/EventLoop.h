@@ -46,8 +46,8 @@ private:
     bool looping_;
     bool quit_;
     bool callingPendingFunc_;
-    std::unique_ptr<EPoller> poller_;
     const pid_t threadId_;
+    std::unique_ptr<EPoller> poller_;
     ChannelList activeChannels_;
     std::unique_ptr<TimerQueue> timerQueue_;
     int wakeupFd_;

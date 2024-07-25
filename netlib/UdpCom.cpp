@@ -72,7 +72,7 @@ int UdpCom::send(Buffer &buf, sockaddr &target)
     {
         LOG("sendto return -1, error no: %d", errno);
     }
-    if (n != buf.readableBytes())
+    if (n != static_cast<ssize_t>(buf.readableBytes()))
     {
         LOG("Sendto %lu bytes but buf have %lu bytes", n, buf.readableBytes());
     }
@@ -89,7 +89,7 @@ void UdpCom::handleRead()
     assert(tmpbuf_.writableBytes() >= kBufferSize);
     ssize_t n = ::recvfrom(sockfd_, tmpbuf_.beginWrite(), kBufferSize, MSG_DONTWAIT, &sourceAddr, &len);
 
-    if (n >= kBufferSize)
+    if (n >= static_cast<ssize_t>(kBufferSize))
     {
         LOG("recvfrom %ld bytes, may out of buffer.", n);
     }

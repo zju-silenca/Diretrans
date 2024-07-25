@@ -26,10 +26,10 @@ static int createWakeupFd()
 EventLoop::EventLoop() :
     looping_(false),
     quit_(false),
+    callingPendingFunc_(false),
     threadId_(syscall(SYS_gettid)),
     poller_(new EPoller(this)),
     timerQueue_(new TimerQueue(this)),
-    callingPendingFunc_(false),
     wakeupFd_(createWakeupFd()),
     wakeupChannel_(new Channel(this, wakeupFd_))
 {
