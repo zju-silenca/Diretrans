@@ -1,7 +1,4 @@
 #include <pthread.h>
-#include <sys/timerfd.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
 #include "netlib/Log.h"
 #include "DiretransServer.h"
 
