@@ -63,6 +63,12 @@ void DiretransServer::handleMessage(UdpCom *conn, Buffer &buf, sockaddr &addr, T
         LOG("nullptr");
     }
 
+    char ip_str[INET_ADDRSTRLEN];
+    const struct sockaddr_in *sa_in = (struct sockaddr_in *)&addr;
+    inet_ntop(AF_INET, &sa_in->sin_addr.s_addr, ip_str, INET_ADDRSTRLEN);
+
+    LOG("New message From %s:%u", ip_str, ::ntohs(sa_in->sin_port));
+
     if (buf.readableBytes() < sizeof(Header))
     {
         LOG("Receive %lu bytes, lower than Header.", buf.readableBytes());
@@ -162,7 +168,12 @@ bool DiretransServer::handleShareFile(const Buffer& req, Buffer& send, struct so
     {
         shareCode.code = shareCodes_.getCode();
     } while (fileDatas_.find(shareCode.code) != fileDatas_.end());
-    LOG("New share code:%u", shareCode.code);
+
+    char ip_str[INET_ADDRSTRLEN];
+    const struct sockaddr_in *sa_in = (struct sockaddr_in *)&addr;
+    inet_ntop(AF_INET, &sa_in->sin_addr.s_addr, ip_str, INET_ADDRSTRLEN);
+
+    LOG("New share code:%u From %s:%u", shareCode.code, ip_str, ::ntohs(sa_in->sin_port));
     fileDataAddr.addr = addr;
     fileDatas_[shareCode.code] = fileDataAddr;
     header.sign = kServerSign;

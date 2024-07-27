@@ -26,6 +26,6 @@ target_compile_options(server PRIVATE -Wall)
 
 target_link_libraries(server PRIVATE pthread netlib)
 # 设置包含目录
-target_include_directories(server PUBLIC ${CMAKE_SOURCE_DIR})
+target_include_directories(server PUBLIC ${CMAKE_SOURCE_DIR} "../utils")
 
 

@@ -50,8 +50,9 @@ UdpCom::UdpCom(EventLoop* loop, uint16_t port)
 
     if (0 > bind(sockfd_, (const sockaddr *)&server_addr, sizeof(server_addr)))
     {
-        LOG("Bind socket error");
+        LOG("Bind socket port %u error", port);
     }
+    LOG("Bind socket port %u success.", port);
     tmpbuf_.ensureWritableBytes(kBufferSize);
     channel_->setReadCallback(std::bind(&UdpCom::handleRead, this));
     channel_->enableReading();
