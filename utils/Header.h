@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 
 const static uint8_t kServerSign = 0xCCu;
+const static uint8_t kClientSign = 0xDDu;
 const static uint8_t kFileNameLenth = 0xFFu;
 const static uint8_t kShareCodeLen = 6;
 const static uint8_t kPasswordLen = 12;
@@ -16,10 +17,10 @@ typedef enum MessageType_ : uint8_t
     SHARE_CODE,
     GET_FILE,
     FILE_DATA,
-    ERROR_FORMAT, // 格式错误
+    ERROR_FORMAT = 0xf0u, // 格式错误
     ERROR_LIMIT, // 分享达到上限
     ERROR_404, // 分享码不存在
-    TYPE_NUM
+    TYPE_MAX
 } MessageType;
 
 #pragma pack(1)

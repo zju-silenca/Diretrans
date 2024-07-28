@@ -36,7 +36,8 @@ static int createSocket()
 }
 
 UdpCom::UdpCom(EventLoop* loop, uint16_t port)
-    : port_(port),
+    : bound_(false),
+     port_(port),
      loop_(loop),
      sockfd_(createSocket()),
      channel_(new Channel(loop_, sockfd_))
@@ -51,6 +52,11 @@ UdpCom::UdpCom(EventLoop* loop, uint16_t port)
     if (0 > bind(sockfd_, (const sockaddr *)&server_addr, sizeof(server_addr)))
     {
         LOG("Bind socket port %u error", port);
+        bound_ = false;
+    }
+    else
+    {
+        bound_ = true;
     }
     LOG("Bind socket port %u success.", port);
     tmpbuf_.ensureWritableBytes(kBufferSize);

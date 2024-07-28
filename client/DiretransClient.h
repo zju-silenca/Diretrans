@@ -3,20 +3,26 @@
 
 #include <memory>
 #include <map>
-#include "Header.h"
+#include "utils/Header.h"
 #include "netlib/EventLoop.h"
+#include "netlib/Channel.h"
 #include "netlib/UdpCom.h"
 
 class DiretransClient
 {
 public:
-    DiretransClient(){};
+    DiretransClient();
+    int writeCmdtoSock(char* msg, int lenth);
+    void start() { loop_.loop(); }
 
 private:
-
+    void createSocketPair();
+    void handleCmd();
     EventLoop loop_;
-    std::unique_ptr<UdpCom> conn_; 
-
+    std::unique_ptr<UdpCom> conn_;
+    int readsock_;
+    int writesock_;
+    std::unique_ptr<Channel> cmdchannel_;
 };
 
 #endif

@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.2)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 set(CMAKE_BUILD_TYPE Debug)
 
@@ -26,6 +26,6 @@ target_compile_options(server PRIVATE -Wall)
 
 target_link_libraries(server PRIVATE pthread netlib)
 # 设置包含目录
-target_include_directories(server PUBLIC ${CMAKE_SOURCE_DIR} "../utils")
+target_include_directories(server PUBLIC ${CMAKE_SOURCE_DIR})
 
 

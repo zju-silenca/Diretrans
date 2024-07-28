@@ -22,6 +22,7 @@ public:
     ~UdpCom();
 
     //int getFd() {return sockfd_;}
+    bool isBound() { return bound_; }
     uint16_t getPort() {return port_;}
     int send(Buffer& buf, struct sockaddr& target);
     void setMessageCallback(const MessageCallback& cb) { messageCallback_ = cb;}
@@ -32,6 +33,7 @@ private:
     void handleRead();
     MessageCallback messageCallback_;
     // closeCallback is no-need becauese udp is no-connection
+    bool bound_;
     uint16_t port_;
     EventLoop* loop_;
     int sockfd_;
