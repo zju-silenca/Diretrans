@@ -10,9 +10,12 @@ const static uint8_t kFileNameLenth = 0xFFu;
 const static uint8_t kShareCodeLen = 6;
 const static uint8_t kPasswordLen = 12;
 
+typedef uint32_t sharecode;
+
 typedef enum MessageType_ : uint8_t
 {
     HELLO = 0,
+    HELLO_REPLY,
     SHARE_FILE,
     SHARE_CODE,
     GET_FILE,
@@ -34,7 +37,7 @@ typedef struct Header_
 
 typedef struct ShareCode_
 {
-    uint32_t code;
+    sharecode code;
 } ShareCode;
 
 

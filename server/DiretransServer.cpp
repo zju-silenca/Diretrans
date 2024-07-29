@@ -107,7 +107,7 @@ void DiretransServer::handleHello(Buffer &buf)
 {
     Header header;
     header.sign = kServerSign;
-    header.type = HELLO;
+    header.type = HELLO_REPLY;
     header.dataLenth = 0;
     buf.ensureWritableBytes(sizeof(header));
     memcpy(buf.beginWrite(), &header, sizeof(header));

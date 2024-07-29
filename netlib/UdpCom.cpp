@@ -42,6 +42,22 @@ UdpCom::UdpCom(EventLoop* loop, uint16_t port)
      sockfd_(createSocket()),
      channel_(new Channel(loop_, sockfd_))
 {
+    bindPort(port);
+    tmpbuf_.ensureWritableBytes(kBufferSize);
+    channel_->setReadCallback(std::bind(&UdpCom::handleRead, this));
+    channel_->enableReading();
+}
+
+UdpCom::~UdpCom()
+{
+    if (sockfd_ > 0)
+    {
+        close(sockfd_);
+    }
+}
+
+void UdpCom::bindPort(uint16_t port)
+{
     struct sockaddr_in server_addr;
 
     memset(&server_addr, 0, sizeof(server_addr));
@@ -59,21 +75,11 @@ UdpCom::UdpCom(EventLoop* loop, uint16_t port)
         bound_ = true;
     }
     LOG("Bind socket port %u success.", port);
-    tmpbuf_.ensureWritableBytes(kBufferSize);
-    channel_->setReadCallback(std::bind(&UdpCom::handleRead, this));
-    channel_->enableReading();
-}
-
-UdpCom::~UdpCom()
-{
-    if (sockfd_ > 0)
-    {
-        close(sockfd_);
-    }
 }
 
 int UdpCom::send(Buffer &buf, sockaddr &target)
 {
+    assert(bound_ == true);
     ssize_t n = ::sendto(sockfd_, buf.peek(), buf.readableBytes(), 0, &target, sizeof(target));
     if (n == -1)
     {

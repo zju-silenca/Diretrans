@@ -41,7 +41,7 @@ private:
     RandomCode shareCodes_;
     std::unique_ptr<UdpCom> conn_;
     // 记录分享码对应的文件信息
-    std::map<uint32_t, FileDataAddr> fileDatas_;
+    std::map<sharecode, FileDataAddr> fileDatas_;
     // 记录某个ip分享的文件数量
     std::map<uint32_t, int> shareFileNum_;
 };

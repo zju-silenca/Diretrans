@@ -44,5 +44,6 @@ int main()
     client.start();
     threadRunning = false;
     LOG("Main thread exit, please input enter.");
+    pthread_join(cmdThreadId, nullptr);
     return 0;
 }

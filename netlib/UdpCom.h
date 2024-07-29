@@ -21,8 +21,9 @@ public:
     UdpCom(const UdpCom&) = delete;
     ~UdpCom();
 
-    //int getFd() {return sockfd_;}
+    int getFd() {return sockfd_;}
     bool isBound() { return bound_; }
+    void bindPort(uint16_t port);
     uint16_t getPort() {return port_;}
     int send(Buffer& buf, struct sockaddr& target);
     void setMessageCallback(const MessageCallback& cb) { messageCallback_ = cb;}
