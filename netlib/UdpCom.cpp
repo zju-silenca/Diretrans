@@ -17,7 +17,7 @@ static int createSocket()
         abort();
     }
 
-    // 设置非阻塞模式
+    /* 设置非阻塞模式
     int flags = fcntl(sockfd, F_GETFL, 0);
     if (flags < 0) {
         LOG("fcntl F_GETFL failed");
@@ -30,7 +30,7 @@ static int createSocket()
         LOG("fcntl F_SETFL failed");
         close(sockfd);
         abort();
-    }
+    }*/
 
     return sockfd;
 }
@@ -77,7 +77,7 @@ void UdpCom::bindPort(uint16_t port)
     LOG("Bind socket port %u success.", port);
 }
 
-int UdpCom::send(Buffer &buf, sockaddr &target)
+int UdpCom::send(const Buffer &buf, const sockaddr &target)
 {
     assert(bound_ == true);
     ssize_t n = ::sendto(sockfd_, buf.peek(), buf.readableBytes(), 0, &target, sizeof(target));

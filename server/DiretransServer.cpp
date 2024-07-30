@@ -62,6 +62,7 @@ void DiretransServer::handleMessage(UdpCom *conn, Buffer &buf, sockaddr &addr, T
     {
         LOG("nullptr");
     }
+    assert(conn == conn_.get());
 
     char ip_str[INET_ADDRSTRLEN];
     const struct sockaddr_in *sa_in = (struct sockaddr_in *)&addr;
@@ -84,16 +85,13 @@ void DiretransServer::handleMessage(UdpCom *conn, Buffer &buf, sockaddr &addr, T
     switch (header.type)
     {
     case HELLO:
-        handleHello(sendMsg);
-        conn->send(sendMsg, addr);
+        handleHello();
         break;
     case SHARE_FILE:
-        if (handleShareFile(buf, sendMsg, addr))
-            conn->send(sendMsg, addr);
+        handleShareFile(buf, addr);
         break;
     case GET_FILE:
-        if (handleGetFile(buf, sendMsg, addr))
-            conn->send(sendMsg, addr);
+        handleGetFile(buf, addr);
         break;
     case SHARE_CODE:
     case FILE_DATA:
@@ -103,8 +101,9 @@ void DiretransServer::handleMessage(UdpCom *conn, Buffer &buf, sockaddr &addr, T
     }
 }
 
-void DiretransServer::handleHello(Buffer &buf)
+void DiretransServer::handleHello()
 {
+    Buffer buf;
     Header header;
     header.sign = kServerSign;
     header.type = HELLO_REPLY;
@@ -114,18 +113,19 @@ void DiretransServer::handleHello(Buffer &buf)
     buf.hasWritten(sizeof(header));
 }
 
-bool DiretransServer::handleShareFile(const Buffer& req, Buffer& send, struct sockaddr& addr)
+void DiretransServer::handleShareFile(const Buffer& req, const sockaddr& addr)
 {
-    Header header;
-    FileDataAddr fileDataAddr;
-    ShareCode shareCode;
+    Buffer send;
+    Header header = {0};
+    FileDataAddr fileDataAddr = {0};
+    ShareCode shareCode = {0};
     assert(req.readableBytes() > sizeof(Header));
     memcpy(&header, req.peek(), sizeof(header));
     assert(header.type == SHARE_FILE);
     if (header.dataLenth < sizeof(FileData))
     {
         LOG("dataLenth:%u error.", header.dataLenth);
-        return false;
+        return;
     }
     memcpy(&fileDataAddr.fileData, req.peek()+sizeof(Header), sizeof(FileData));
     if (strlen(fileDataAddr.fileData.fileName) == 0 ||
@@ -135,7 +135,8 @@ bool DiretransServer::handleShareFile(const Buffer& req, Buffer& send, struct so
         header.type = ERROR_FORMAT;
         header.dataLenth = 0;
         send.append((char *)&header, sizeof(Header));
-        return true;
+        conn_->send(send, addr);
+        return;
     }
 
     uint32_t ip = getSockaddrIp(addr);
@@ -152,7 +153,8 @@ bool DiretransServer::handleShareFile(const Buffer& req, Buffer& send, struct so
             header.type = ERROR_LIMIT;
             header.dataLenth = 0;
             send.append((char *)&header, sizeof(Header));
-            return true;
+            conn_->send(send, addr);
+            return;
         }
         else
         {
@@ -181,22 +183,26 @@ bool DiretransServer::handleShareFile(const Buffer& req, Buffer& send, struct so
     header.dataLenth = sizeof(ShareCode);
     send.append((char *)&header, sizeof(Header));
     send.append((char *)&shareCode, sizeof(ShareCode));
-
-    return true;
+    conn_->send(send, addr);
+    return;
 }
 
-bool DiretransServer::handleGetFile(const Buffer& req, Buffer& send, struct sockaddr& addr)
+void DiretransServer::handleGetFile(const Buffer& req, const sockaddr& recvAddr)
 {
-    Header header;
-    FileDataAddr fileDataAddr;
-    ShareCode shareCode;
+    Buffer toRecv;
+    Buffer toSend;
+    Header header = {0};
+    FileDataAddr fileDataAddr = {0};
+    ShareCode shareCode = {0};
+    PeerAddr peerAddr = {0};
+
     assert(req.readableBytes() > sizeof(Header));
     memcpy(&header, req.peek(), sizeof(header));
     assert(header.type == GET_FILE);
     if (header.dataLenth < sizeof(ShareCode))
     {
         LOG("dataLenth:%u error.", header.dataLenth);
-        return false;
+        return;
     }
     memcpy(&shareCode, req.peek()+sizeof(Header), sizeof(ShareCode));
 
@@ -206,8 +212,9 @@ bool DiretransServer::handleGetFile(const Buffer& req, Buffer& send, struct sock
         header.sign = kServerSign;
         header.type = ERROR_404;
         header.dataLenth = 0;
-        send.append((char *)&header, sizeof(Header));
-        return true;
+        toRecv.append((char *)&header, sizeof(Header));
+        conn_->send(toRecv, recvAddr);
+        return;
     }
     else
     {
@@ -217,8 +224,17 @@ bool DiretransServer::handleGetFile(const Buffer& req, Buffer& send, struct sock
     header.sign = kServerSign;
     header.type = FILE_DATA;
     header.dataLenth = sizeof(FileDataAddr);
-    send.append((char *)&header, sizeof(Header));
-    send.append((char *)&fileDataAddr, sizeof(FileDataAddr));
+    toRecv.append((char *)&header, sizeof(Header));
+    toRecv.append((char *)&fileDataAddr, sizeof(FileDataAddr));
+    conn_->send(toRecv, recvAddr);
 
-    return true;
+    header.sign = kServerSign;
+    header.type = FILE_REQ;
+    header.dataLenth = sizeof(PeerAddr);
+    peerAddr.addr = recvAddr;
+    toSend.append((char *)&header, sizeof(Header));
+    toSend.append((char *)&peerAddr, sizeof(PeerAddr));
+    conn_->send(toSend, fileDataAddr.addr);
+
+    return;
 }

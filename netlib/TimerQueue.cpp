@@ -78,7 +78,7 @@ TimerId TimerQueue::addTimer(const TimerCallback &cb, Timestamp when, double int
 
 void TimerQueue::cancel(TimerId& timerId)
 {
-
+    timerId.cancel();
 }
 
 void TimerQueue::addTimerInLoop(std::shared_ptr<Timer> timer)
@@ -130,7 +130,7 @@ void TimerQueue::reset(const std::vector<Entry> &expired, Timestamp now)
     for (std::vector<Entry>::const_iterator it = expired.begin();
         it != expired.end(); ++it)
     {
-        if (it->second->repeat())
+        if (it->second != nullptr && it->second->repeat())
         {
             it->second->restart(now);
             insert(it->second);

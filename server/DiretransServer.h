@@ -32,11 +32,11 @@ public:
 
 private:
     static const int kMaxSharedPerIp = 10;
-    uint32_t getSockaddrIp(const struct sockaddr& addr);
-    void handleMessage(UdpCom* , Buffer&, struct sockaddr&, Timestamp&);
-    void handleHello(Buffer& buf);
-    bool handleShareFile(const Buffer& req, Buffer& send, struct sockaddr& addr);
-    bool handleGetFile(const Buffer& req, Buffer& send, struct sockaddr& addr);
+    uint32_t getSockaddrIp(const sockaddr& addr);
+    void handleMessage(UdpCom* , Buffer&, sockaddr&, Timestamp&);
+    void handleHello();
+    void handleShareFile(const Buffer& req, const sockaddr& addr);
+    void handleGetFile(const Buffer& req, const sockaddr& recvAddr);
     EventLoop loop_;
     RandomCode shareCodes_;
     std::unique_ptr<UdpCom> conn_;

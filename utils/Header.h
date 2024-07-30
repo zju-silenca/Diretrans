@@ -20,6 +20,11 @@ typedef enum MessageType_ : uint8_t
     SHARE_CODE,
     GET_FILE,
     FILE_DATA,
+    FILE_REQ, // 有人请求分享码，通知分享者
+    DOWNLOAD_START, // 开始下载
+    DATA_STREAM, // 文件数据流
+    RETRAN, // 重传请求
+    FINISH, // 传输完成
     ERROR_FORMAT = 0xf0u, // 格式错误
     ERROR_LIMIT, // 分享达到上限
     ERROR_404, // 分享码不存在
@@ -53,6 +58,11 @@ typedef struct FileDataAddr_
     FileData fileData;
     struct sockaddr addr;
 } FileDataAddr;
+
+typedef struct PeerAddr_
+{
+    struct sockaddr addr;
+} PeerAddr;
 
 #pragma pack()
 #endif

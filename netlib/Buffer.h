@@ -14,7 +14,7 @@ public:
     static const size_t kInitSize = 1024;
 
     Buffer()
-    : buffer_(kPrependSize + kInitSize),
+    : buffer_(kPrependSize + kInitSize, 0),
     readIndex_(kPrependSize),
     writeIndex_(kPrependSize)
     {

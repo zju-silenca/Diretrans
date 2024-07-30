@@ -14,6 +14,7 @@ public:
     : value_(std::move(other.value_))
     {}
 
+    void cancel() { value_.reset(); }
     void run() { value_->run(); }
 
 private:

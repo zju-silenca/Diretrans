@@ -48,6 +48,30 @@ void DiretransClient::movePendConn(int fd, sharecode code)
     pendingconns_.erase(conn);
 }
 
+void DiretransClient::closeConn(int fd)
+{
+    auto conn1 = pendingconns_.find(fd);
+    if (conn1 != pendingconns_.end())
+    {
+        pendingconns_.erase(conn1);
+        return;
+    }
+
+    auto conn2 = sendconns_.find(fd);
+    if (conn2 != sendconns_.end())
+    {
+        sendconns_.erase(conn2);
+        return;
+    }
+
+    auto conn3 = getconns_.find(fd);
+    if (conn3 == getconns_.end())
+    {
+        getconns_.erase(conn3);
+        return;
+    }
+}
+
 void DiretransClient::createSocketPair()
 {
     int sockfds[2] = {0};
@@ -92,7 +116,16 @@ void DiretransClient::handleCmd()
         pendingconns_[fd]->shareFile(fileName);
     }else if ("GET" == cmds[0])
     {
-
+        sharecode code = atoi(cmds[1].c_str());
+        if (code == 0)
+        {
+            LOG("Error share code.");
+            return;
+        }
+        auto conn = std::make_unique<ConnManager>(this);
+        int fd = conn->getFd();
+        getconns_[fd] = std::move(conn);
+        getconns_[fd]->getFile(code);
     }else if ("CHAT" == cmds[0])
     {
 

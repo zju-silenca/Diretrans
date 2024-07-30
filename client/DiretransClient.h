@@ -16,6 +16,7 @@ public:
     DiretransClient();
     int writeCmdtoSock(const char* msg, int lenth);
     void movePendConn(int fd, sharecode code);
+    void closeConn(int fd);
     void start() { loop_.loop(); }
     EventLoop* getLoop() { return &loop_; }
     struct sockaddr getServerAddr() const { return serveraddr_; }
@@ -23,8 +24,6 @@ public:
 private:
     void createSocketPair();
     void handleCmd();
-    void shareFile(const std::string file);
-    void shareFileMsgHandle(UdpCom* conn, Buffer& buf, struct sockaddr& addr, Timestamp& time);
     EventLoop loop_;
 
     int readsock_;

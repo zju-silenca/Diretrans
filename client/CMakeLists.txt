@@ -4,6 +4,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 set(CMAKE_BUILD_TYPE Debug)
 
+
 # 获取项目根目录的绝对路径
 get_filename_component(PROJECT_SOURCE_DIR_ABSOLUTE "${CMAKE_CURRENT_SOURCE_DIR}" ABSOLUTE)
 
@@ -24,7 +25,7 @@ add_executable(client ${ALL_SOURCES})
 
 target_compile_options(client PRIVATE -Wall)
 
-target_link_libraries(client PRIVATE pthread netlib)
+target_link_libraries(client PRIVATE pthread netlib )
 # 设置包含目录
 target_include_directories(client PUBLIC ${CMAKE_SOURCE_DIR})
 
