@@ -90,6 +90,16 @@ void ConnManager::getFile(sharecode code)
     state_ = WAIT_SENDER;
 }
 
+void ConnManager::chatMsg(Buffer &msg)
+{
+    Header header;
+    header.sign = kClientSign;
+    header.type = CHAT;
+    header.dataLenth = msg.readableBytes();
+    msg.prepend((char *)&header, sizeof(header));
+    conn_.send(msg, recveraddr_);
+}
+
 void ConnManager::shareFileMsgHandle(UdpCom *conn, Buffer &buf, sockaddr &addr, Timestamp &time)
 {
     Header header = {0};
@@ -177,6 +187,11 @@ void ConnManager::shareFileMsgHandle(UdpCom *conn, Buffer &buf, sockaddr &addr, 
             &ConnManager::holdConn, this, recveraddr_, kClientSign)));
         state_ = CONN_RECVER;
         break;
+    case CHAT:
+        char temp[1024];
+        strncpy(temp, buf.peek()+sizeof(Header), header.dataLenth);
+        LOG("%s :%s", ip_str, temp);
+        break;
     case ERROR_FORMAT:
     case ERROR_LIMIT:
         closeSelf();
@@ -259,6 +274,11 @@ void ConnManager::getFileMsgHandle(UdpCom *conn, Buffer &buf, sockaddr &addr, Ti
             conn_.getLoop()->runEvery(10, std::bind(
             &ConnManager::holdConn, this, recveraddr_, kClientSign)));
         state_ = CONN_SENDER;
+        break;
+    case CHAT:
+        char temp[1024];
+        strncpy(temp, buf.peek()+sizeof(Header), header.dataLenth);
+        LOG("%s :%s", ip_str, temp);
         break;
     case ERROR_FORMAT:
     case ERROR_404:

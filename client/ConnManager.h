@@ -26,6 +26,7 @@ public:
     ~ConnManager();
     void shareFile(Buffer& fileName);
     void getFile(sharecode code);
+    void chatMsg(Buffer& msg);
     int getFd() { return conn_.getFd(); }
 
 private:

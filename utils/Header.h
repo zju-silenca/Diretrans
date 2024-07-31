@@ -25,6 +25,7 @@ typedef enum MessageType_ : uint8_t
     DATA_STREAM, // 文件数据流
     RETRAN, // 重传请求
     FINISH, // 传输完成
+    CHAT, // 聊天消息
     ERROR_FORMAT = 0xf0u, // 格式错误
     ERROR_LIMIT, // 分享达到上限
     ERROR_404, // 分享码不存在

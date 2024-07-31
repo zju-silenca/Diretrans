@@ -112,6 +112,7 @@ void DiretransClient::handleCmd()
         fileName.append(cmds[1]);
         auto conn = std::make_unique<ConnManager>(this);
         int fd = conn->getFd();
+        LOG("New connection fd: %d", fd);
         pendingconns_[fd] = std::move(conn);
         pendingconns_[fd]->shareFile(fileName);
     }else if ("GET" == cmds[0])
@@ -124,10 +125,42 @@ void DiretransClient::handleCmd()
         }
         auto conn = std::make_unique<ConnManager>(this);
         int fd = conn->getFd();
+        LOG("New connection fd: %d", fd);
         getconns_[fd] = std::move(conn);
         getconns_[fd]->getFile(code);
     }else if ("CHAT" == cmds[0])
     {
+        if (cmds.size() <= 2)
+        {
+            LOG("Please input msg");
+            return;
+        }
+
+        int fd = atoi(cmds[1].c_str());
+        if (fd <= 0)
+        {
+            LOG("Input error fd.");
+        }
+
+        auto conn = getconns_.find(fd);
+        if (conn == getconns_.end())
+        {
+            conn = sendconns_.find(fd);
+            if (conn == sendconns_.end())
+            {
+                LOG("Not find this fd.");
+                return;
+            }
+        }
+
+        Buffer msg;
+        auto space = std::string(" ");
+        for (int i = 2; i < cmds.size(); ++i)
+        {
+            msg.append(cmds[i]);
+            msg.append(space);
+        }
+        conn->second->chatMsg(msg);
 
     } else
     {
