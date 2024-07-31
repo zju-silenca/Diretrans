@@ -1,9 +1,5 @@
 cmake_minimum_required (VERSION 3.2)
 
-set(CMAKE_CXX_STANDARD 14)
-
-set(CMAKE_BUILD_TYPE Debug)
-
 # 获取项目根目录的绝对路径
 get_filename_component(PROJECT_SOURCE_DIR_ABSOLUTE "${CMAKE_CURRENT_SOURCE_DIR}" ABSOLUTE)
 
