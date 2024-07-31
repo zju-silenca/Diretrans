@@ -153,6 +153,9 @@ void ConnManager::shareFileMsgHandle(UdpCom *conn, Buffer &buf, sockaddr &addr, 
         code_ = code.code;
         LOG("Share code is %u", code_);
         client_->movePendConn(conn_.getFd(), code_);
+        repeattimers_.push_back(
+            conn_.getLoop()->runEvery(10, std::bind(
+            &ConnManager::holdConn, this, serveraddr_, kServerSign)));
         state_ = WAIT_RECVER;
         break;
     case FILE_REQ:

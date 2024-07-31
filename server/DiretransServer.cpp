@@ -85,7 +85,7 @@ void DiretransServer::handleMessage(UdpCom *conn, Buffer &buf, sockaddr &addr, T
     switch (header.type)
     {
     case HELLO:
-        handleHello();
+        handleHello(addr);
         break;
     case SHARE_FILE:
         handleShareFile(buf, addr);
@@ -101,7 +101,7 @@ void DiretransServer::handleMessage(UdpCom *conn, Buffer &buf, sockaddr &addr, T
     }
 }
 
-void DiretransServer::handleHello()
+void DiretransServer::handleHello(const sockaddr& addr)
 {
     Buffer buf;
     Header header;
@@ -111,6 +111,7 @@ void DiretransServer::handleHello()
     buf.ensureWritableBytes(sizeof(header));
     memcpy(buf.beginWrite(), &header, sizeof(header));
     buf.hasWritten(sizeof(header));
+    conn_->send(buf, addr);
 }
 
 void DiretransServer::handleShareFile(const Buffer& req, const sockaddr& addr)

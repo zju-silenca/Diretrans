@@ -34,7 +34,7 @@ private:
     static const int kMaxSharedPerIp = 10;
     uint32_t getSockaddrIp(const sockaddr& addr);
     void handleMessage(UdpCom* , Buffer&, sockaddr&, Timestamp&);
-    void handleHello();
+    void handleHello(const sockaddr& addr);
     void handleShareFile(const Buffer& req, const sockaddr& addr);
     void handleGetFile(const Buffer& req, const sockaddr& recvAddr);
     EventLoop loop_;
