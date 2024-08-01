@@ -44,6 +44,7 @@ DiretransServer::DiretransServer(int port)
 
 void DiretransServer::start()
 {
+    loop_.runEvery(kTimeoutSec, std::bind(&DiretransServer::removeTimeoutConn, this));
     loop_.loop();
 }
 
@@ -80,6 +81,8 @@ void DiretransServer::handleMessage(UdpCom *conn, Buffer &buf, sockaddr &addr, T
         LOG("Header sign is %u != %u.", (uint8_t)(*buf.peek()), kServerSign);
         return;
     }
+
+    activeTimes_[addr] = Timestamp::now();
 
     memcpy(&header, buf.peek(), sizeof(Header));
     switch (header.type)
@@ -143,7 +146,8 @@ void DiretransServer::handleShareFile(const Buffer& req, const sockaddr& addr)
     uint32_t ip = getSockaddrIp(addr);
     if (shareFileNum_.find(ip) != shareFileNum_.end())
     {
-        if (shareFileNum_[ip] >= kMaxSharedPerIp)
+        if (shareFileNum_[ip] >= kMaxSharedPerIp ||
+            codesMap_.find(addr) != codesMap_.end())
         {
             char ip_str[INET_ADDRSTRLEN];
             struct in_addr in_ad;
@@ -177,6 +181,8 @@ void DiretransServer::handleShareFile(const Buffer& req, const sockaddr& addr)
     inet_ntop(AF_INET, &sa_in->sin_addr.s_addr, ip_str, INET_ADDRSTRLEN);
 
     LOG("New share code:%u From %s:%u", shareCode.code, ip_str, ::ntohs(sa_in->sin_port));
+    assert(codesMap_.find(addr) == codesMap_.end());
+    codesMap_[addr] = shareCode.code;
     fileDataAddr.addr = addr;
     fileDatas_[shareCode.code] = fileDataAddr;
     header.sign = kServerSign;
@@ -238,4 +244,33 @@ void DiretransServer::handleGetFile(const Buffer& req, const sockaddr& recvAddr)
     conn_->send(toSend, fileDataAddr.addr);
 
     return;
+}
+
+void DiretransServer::removeTimeoutConn()
+{
+    Timestamp nowTime(Timestamp::now());
+    int nums = 0;
+    if (activeTimes_.size() == 0)
+    {
+        return;
+    }
+
+    for (auto it = activeTimes_.begin(); it != activeTimes_.end(); )
+    {
+        if (nowTime.getMicroSeconds() > it->second.getMicroSeconds() + kTimeoutSec * Timestamp::kMicroSecondsPerSecond)
+        {
+            if (codesMap_.find(it->first) != codesMap_.end())
+            {
+                fileDatas_.erase(codesMap_[it->first]);
+                codesMap_.erase(it->first);
+                --shareFileNum_[getSockaddrIp(it->first)];
+                ++nums;
+            }
+            it = activeTimes_.erase(it);
+        }else
+        {
+            ++it;
+        }
+    }
+    LOG("Remove %d timeout sharers.", nums);
 }

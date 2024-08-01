@@ -16,7 +16,8 @@ public:
     DiretransClient();
     int writeCmdtoSock(const char* msg, int lenth);
     void movePendConn(int fd, sharecode code);
-    void closeConn(int fd);
+    void closeConn(sharecode code);
+    void closePendConn(int fd);
     void start() { loop_.loop(); }
     EventLoop* getLoop() { return &loop_; }
     struct sockaddr getServerAddr() const { return serveraddr_; }
@@ -24,6 +25,7 @@ public:
 private:
     void createSocketPair();
     void handleCmd();
+    void deleteConn();
     EventLoop loop_;
 
     int readsock_;
@@ -35,7 +37,10 @@ private:
     std::map<sharecode, std::unique_ptr<ConnManager>> sendconns_;
     // 获取文件的连接
     std::map<sharecode, std::unique_ptr<ConnManager>> getconns_;
+    // 待回收的连接
+    std::set<std::unique_ptr<ConnManager>> deleteconns_;
     struct sockaddr serveraddr_;
+    static constexpr double kDeleteConnPerSec = 10;
 };
 
 #endif

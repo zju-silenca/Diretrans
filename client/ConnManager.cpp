@@ -75,6 +75,7 @@ void ConnManager::getFile(sharecode code)
     assert(state_ == IDLE);
     assert(conn_.isBound());
 
+    code_ = code;
     shareCode.code = code;
     header.sign = kServerSign;
     header.type = GET_FILE;
@@ -188,9 +189,7 @@ void ConnManager::shareFileMsgHandle(UdpCom *conn, Buffer &buf, sockaddr &addr, 
         state_ = CONN_RECVER;
         break;
     case CHAT:
-        char temp[1024];
-        strncpy(temp, buf.peek()+sizeof(Header), header.dataLenth);
-        LOG("%s :%s", ip_str, temp);
+        LOG("Chat msg from %s:%s", ip_str, buf.peek()+sizeof(Header));
         break;
     case ERROR_FORMAT:
     case ERROR_LIMIT:
@@ -206,6 +205,7 @@ void ConnManager::getFileMsgHandle(UdpCom *conn, Buffer &buf, sockaddr &addr, Ti
     Buffer sendMsg;
     FileDataAddr fileDataAddr = {0};
     uint8_t sign = 0;
+
     if (conn == nullptr)
     {
         LOG("nullptr");
@@ -276,9 +276,7 @@ void ConnManager::getFileMsgHandle(UdpCom *conn, Buffer &buf, sockaddr &addr, Ti
         state_ = CONN_SENDER;
         break;
     case CHAT:
-        char temp[1024];
-        strncpy(temp, buf.peek()+sizeof(Header), header.dataLenth);
-        LOG("%s :%s", ip_str, temp);
+        LOG("Chat msg from %s:%s", ip_str, buf.peek()+sizeof(Header));
         break;
     case ERROR_FORMAT:
     case ERROR_404:
@@ -301,5 +299,12 @@ void ConnManager::holdConn(sockaddr &addr, uint8_t sign)
 
 void ConnManager::closeSelf()
 {
-    client_->closeConn(getFd());
+    if (code_ != 0)
+    {
+        client_->closeConn(code_);
+    }
+    else
+    {
+        client_->closePendConn(getFd());
+    }
 }

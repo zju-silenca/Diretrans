@@ -11,6 +11,7 @@ public:
     typedef std::function<void()> EventCallback;
 
     Channel(EventLoop* loop, int fd);
+    ~Channel();
 
     void handleEvent();
     void setReadCallback(const EventCallback cb) {readCallback_ = cb;}
@@ -30,6 +31,8 @@ public:
     int index() {return index_;}
     void set_index(int idx) {index_ = idx;}
 
+    void remove();
+
     EventLoop* ownerLoop() {return loop_;}
 
     Channel(const Channel&) = delete;
@@ -44,12 +47,14 @@ private:
     EventCallback readCallback_;
     EventCallback writeCallback_;
     EventCallback errorCallback_;
+    EventCallback closeCallback_;
 
     EventLoop* loop_;
     const int fd_;
     int events_;
     int revents_;
     int index_;
+    bool eventHandling_;
 };
 
 #endif

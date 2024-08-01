@@ -50,6 +50,8 @@ UdpCom::UdpCom(EventLoop* loop, uint16_t port)
 
 UdpCom::~UdpCom()
 {
+    channel_->disableAll();
+    channel_->remove();
     if (sockfd_ > 0)
     {
         close(sockfd_);

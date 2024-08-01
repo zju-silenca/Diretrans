@@ -48,26 +48,30 @@ void DiretransClient::movePendConn(int fd, sharecode code)
     pendingconns_.erase(conn);
 }
 
-void DiretransClient::closeConn(int fd)
+void DiretransClient::closeConn(sharecode code)
 {
-    auto conn1 = pendingconns_.find(fd);
-    if (conn1 != pendingconns_.end())
+    auto conn = sendconns_.find(code);
+    if (conn != sendconns_.end())
     {
-        pendingconns_.erase(conn1);
-        return;
+        deleteconns_.insert(std::move(conn->second));
     }
 
-    auto conn2 = sendconns_.find(fd);
-    if (conn2 != sendconns_.end())
+    conn = getconns_.find(code);
+    if (conn != getconns_.end())
     {
-        sendconns_.erase(conn2);
-        return;
+        deleteconns_.insert(std::move(conn->second));
     }
 
-    auto conn3 = getconns_.find(fd);
-    if (conn3 == getconns_.end())
+    loop_.queueInLoop(std::bind(&DiretransClient::deleteConn, this));
+}
+
+void DiretransClient::closePendConn(int fd)
+{
+    auto conn = pendingconns_.find(fd);
+    if (conn != pendingconns_.end())
     {
-        getconns_.erase(conn3);
+        deleteconns_.insert(std::move(conn->second));
+        loop_.queueInLoop(std::bind(&DiretransClient::deleteConn, this));
         return;
     }
 }
@@ -112,7 +116,6 @@ void DiretransClient::handleCmd()
         fileName.append(cmds[1]);
         auto conn = std::make_unique<ConnManager>(this);
         int fd = conn->getFd();
-        LOG("New connection fd: %d", fd);
         pendingconns_[fd] = std::move(conn);
         pendingconns_[fd]->shareFile(fileName);
     }else if ("GET" == cmds[0])
@@ -124,10 +127,8 @@ void DiretransClient::handleCmd()
             return;
         }
         auto conn = std::make_unique<ConnManager>(this);
-        int fd = conn->getFd();
-        LOG("New connection fd: %d", fd);
-        getconns_[fd] = std::move(conn);
-        getconns_[fd]->getFile(code);
+        getconns_[code] = std::move(conn);
+        getconns_[code]->getFile(code);
     }else if ("CHAT" == cmds[0])
     {
         if (cmds.size() <= 2)
@@ -136,26 +137,26 @@ void DiretransClient::handleCmd()
             return;
         }
 
-        int fd = atoi(cmds[1].c_str());
-        if (fd <= 0)
+        int code = atoi(cmds[1].c_str());
+        if (code <= 0)
         {
-            LOG("Input error fd.");
+            LOG("Input error code.");
         }
 
-        auto conn = getconns_.find(fd);
+        auto conn = getconns_.find(code);
         if (conn == getconns_.end())
         {
-            conn = sendconns_.find(fd);
+            conn = sendconns_.find(code);
             if (conn == sendconns_.end())
             {
-                LOG("Not find this fd.");
+                LOG("Not find this code.");
                 return;
             }
         }
 
         Buffer msg;
         auto space = std::string(" ");
-        for (int i = 2; i < cmds.size(); ++i)
+        for (size_t i = 2; i < cmds.size(); ++i)
         {
             msg.append(cmds[i]);
             msg.append(space);
@@ -168,4 +169,9 @@ void DiretransClient::handleCmd()
         return;
     }
 
+}
+
+void DiretransClient::deleteConn()
+{
+    deleteconns_.clear();
 }

@@ -28,6 +28,7 @@ public:
     void assertInLoopThread();
     bool isInLoopThread() { return threadId_ == syscall(SYS_gettid);}
     void updateChannel(Channel* channel);
+    void removeChannel(Channel* channel);
     void queueInLoop(const Functors& cb);
     void quit();
     void runInLoop(const Functors& cb);

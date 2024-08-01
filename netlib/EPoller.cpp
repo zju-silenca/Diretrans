@@ -73,14 +73,47 @@ void EPoller::updateChannel(Channel *channel)
         int idx = channel->index();
         assert(0 <= idx && idx < static_cast<int>(pollfds_.size()));
         struct epoll_event& ev = pollfds_[idx];
-        assert(ev.data.fd == channel->fd() || ev.data.fd == -1);
+        assert(ev.data.fd == channel->fd() || ev.data.fd == -channel->fd()-1);
         ev.events = static_cast<uint32_t>(channel->events());
 
         if (channel->isNoneEvent())
         {
-            ev.data.fd = -1;
+            ::epoll_ctl(epollfd_, EPOLL_CTL_DEL, ev.data.fd, &ev);
+            // 后续可能需要重新添加此fd
+            ev.data.fd = -channel->fd()-1;
+        }else
+        {
+            ::epoll_ctl(epollfd_, EPOLL_CTL_MOD, ev.data.fd, &ev);
         }
-        ::epoll_ctl(epollfd_, EPOLL_CTL_MOD, ev.data.fd, &ev);
+    }
+}
+
+void EPoller::removeChannel(Channel *channel)
+{
+    assertInLoopThread();
+    assert(channels_.find(channel->fd()) != channels_.end());
+    assert(channels_[channel->fd()] == channel);
+    assert(channel->isNoneEvent());
+    int idx = channel->index();
+    assert(0 <= idx && idx <= static_cast<int>(pollfds_.size()));
+    const struct epoll_event& ev = pollfds_[idx]; (void)ev;
+    assert(ev.data.fd == -channel->fd()-1 &&  static_cast<int>(ev.events) == channel->events());
+    size_t n = channels_.erase(channel->fd());
+    assert(n == 1); (void)n;
+    if (static_cast<size_t>(idx) == pollfds_.size() - 1)
+    {
+        pollfds_.pop_back();
+    }
+    else
+    {
+        int channelAtEnd = pollfds_.back().data.fd;
+        std::iter_swap(pollfds_.begin() + idx, pollfds_.end() - 1);
+        if (channelAtEnd < 0)
+        {
+            channelAtEnd = -channelAtEnd-1;
+        }
+        channels_[channelAtEnd]->set_index(idx);
+        pollfds_.pop_back();
     }
 }
 
