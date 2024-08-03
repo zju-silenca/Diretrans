@@ -12,7 +12,7 @@ public:
     :   cb_(cb),
         expiration_(when),
         interval_(interval),
-        repeat_(interval_ > 0.0)
+        repeat_(interval > 0.0)
     {}
     Timer(const Timer& ) = delete;
 

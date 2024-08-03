@@ -4,6 +4,8 @@
 #include "utils/Header.h"
 #include "netlib/UdpCom.h"
 #include "netlib/TimerId.h"
+#include "GetFileManager.h"
+#include "SendFileManager.h"
 
 class DiretransClient;
 
@@ -33,16 +35,23 @@ private:
     void shareFileMsgHandle(UdpCom *conn, Buffer &buf, sockaddr &addr, Timestamp &time);
     void getFileMsgHandle(UdpCom *conn, Buffer &buf, sockaddr &addr, Timestamp &time);
     void holdConn(sockaddr &addr, uint8_t sign);
-
+    void sendFileStream();
+    void sendLossPieces(std::vector<uint32_t> pieces);
+    void sendRetranReq();
+    void closeAllTimer();
     void closeSelf();
 
     DiretransClient* client_;
     UdpCom conn_;
     ConnState state_;
     sharecode code_;
+    FileData fileData_;
     struct sockaddr serveraddr_;
     struct sockaddr recveraddr_;
     std::vector<TimerId> repeattimers_;
+    TimerId heartBeatTimerId_;
+    std::unique_ptr<GetFileManager> getManager_;
+    std::unique_ptr<SendFileManager> sendManager_;
 };
 
 #endif

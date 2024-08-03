@@ -4,7 +4,7 @@ project (DirTrans)
 
 option(ASAN "Enable or disable my option" OFF)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_BUILD_TYPE Debug)
 
 message(STATUS "ASAN defined: " ${ASAN})
@@ -22,6 +22,7 @@ endif()
 
 # 添加子目录
 add_subdirectory(netlib)
+add_subdirectory(utils)
 add_subdirectory(server)
 add_subdirectory(client)
 

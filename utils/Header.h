@@ -10,6 +10,8 @@ const static uint8_t kFileNameLenth = 0xFFu;
 const static uint8_t kShareCodeLen = 6;
 const static uint8_t kPasswordLen = 12;
 
+const static uint32_t kBytesPerPiece = 1024;
+
 typedef uint32_t sharecode;
 
 typedef enum MessageType_ : uint8_t
@@ -23,6 +25,7 @@ typedef enum MessageType_ : uint8_t
     FILE_REQ, // 有人请求分享码，通知分享者
     DOWNLOAD_START, // 开始下载
     DATA_STREAM, // 文件数据流
+    PACK_ACK, // 确认接收的数据包数量，用于流量控制
     RETRAN, // 重传请求
     FINISH, // 传输完成
     CHAT, // 聊天消息
@@ -64,6 +67,23 @@ typedef struct PeerAddr_
 {
     struct sockaddr addr;
 } PeerAddr;
+
+typedef struct DataStream_
+{
+    uint32_t pieceNum;
+    char data[];
+} DataStream;
+
+typedef struct RetransPieces_
+{
+    uint32_t nums;
+    uint32_t pieces[];
+} RetransPieces;
+
+typedef struct PackageAck_
+{
+    uint32_t ackNums;
+} PackageAck;
 
 #pragma pack()
 #endif

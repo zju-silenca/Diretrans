@@ -3,7 +3,7 @@ cmake_minimum_required (VERSION 3.2)
 # 获取项目根目录的绝对路径
 get_filename_component(PROJECT_SOURCE_DIR_ABSOLUTE "${CMAKE_CURRENT_SOURCE_DIR}" ABSOLUTE)
 
-# 遍历项目中的所有源文件
+# 遍历当前文件夹中的所有源文件
 file(GLOB_RECURSE ALL_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
 
 # 过滤掉 CMake 内部生成的文件
@@ -16,12 +16,8 @@ foreach(source IN LISTS ALL_SOURCES)
     set_source_files_properties(${source} PROPERTIES COMPILE_FLAGS "-D__RELATIVE_FILE__='\"${source_rel}\"'")
 endforeach()
 
-add_executable(client ${ALL_SOURCES})
+add_library(utils STATIC ${ALL_SOURCES})
 
-target_compile_options(client PRIVATE -Wall)
+target_compile_options(utils PRIVATE -Wall)
 
-target_link_libraries(client PRIVATE pthread netlib utils)
-# 设置包含目录
-target_include_directories(client PUBLIC ${CMAKE_SOURCE_DIR})
-
-
+target_include_directories(utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

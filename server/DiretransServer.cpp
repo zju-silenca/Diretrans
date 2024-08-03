@@ -82,7 +82,7 @@ void DiretransServer::handleMessage(UdpCom *conn, Buffer &buf, sockaddr &addr, T
         return;
     }
 
-    activeTimes_[addr] = Timestamp::now();
+    activeTimes_[addr] = time;
 
     memcpy(&header, buf.peek(), sizeof(Header));
     switch (header.type)
