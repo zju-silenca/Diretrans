@@ -99,11 +99,17 @@ void TimerQueue::handleRead()
     std::vector<Entry> expired = getExpired(now);
 
     for (std::vector<Entry>::iterator it = expired.begin();
-        it != expired.end(); ++it)
+        it != expired.end(); )
     {
-        if (it->second != nullptr)
+        auto timer = it->second.lock();
+        if (timer != nullptr)
         {
-            it->second->run();
+            timer->run();
+            ++it;
+        }
+        else
+        {
+            it = expired.erase(it);
         }
     }
 
@@ -113,7 +119,7 @@ void TimerQueue::handleRead()
 std::vector<TimerQueue::Entry> TimerQueue::getExpired(Timestamp now)
 {
     std::vector<Entry> expired;
-    std::shared_ptr<Timer> tmp;
+    std::weak_ptr<Timer> tmp;
     Entry temp = std::make_pair(now, tmp);
     TimerList::iterator it = timers_.lower_bound(temp);
     assert(it == timers_.end() || now < it->first);
@@ -130,16 +136,25 @@ void TimerQueue::reset(const std::vector<Entry> &expired, Timestamp now)
     for (std::vector<Entry>::const_iterator it = expired.begin();
         it != expired.end(); ++it)
     {
-        if (it->second != nullptr && it->second->repeat())
+        auto timer = it->second.lock();
+        if (timer != nullptr && timer->repeat())
         {
-            it->second->restart(now);
-            insert(it->second);
+            timer->restart(now);
+            insert(timer);
         }
     }
 
-    if (!timers_.empty())
+    while (!timers_.empty())
     {
-        nextExpire = timers_.begin()->second->expiration();
+        auto timer = timers_.begin()->second.lock();
+        if (timer != nullptr)
+        {
+            nextExpire = timer->expiration();
+            break;
+        }else
+        {
+            timers_.erase(timers_.begin());
+        }
     }
 
     if (nextExpire.valid())
@@ -159,7 +174,7 @@ bool TimerQueue::insert(std::shared_ptr<Timer> timer)
     }
 
     std::pair<TimerList::iterator, bool> result = 
-        timers_.insert(std::make_pair(when, timer));
+        timers_.insert(std::make_pair(when, std::weak_ptr<Timer>(timer)));
     assert(result.second);
     return earliestChanged;
 }

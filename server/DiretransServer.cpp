@@ -44,7 +44,7 @@ DiretransServer::DiretransServer(int port)
 
 void DiretransServer::start()
 {
-    loop_.runEvery(kTimeoutSec, std::bind(&DiretransServer::removeTimeoutConn, this));
+    removeUnliveConnTimer_ = loop_.runEvery(kTimeoutSec, std::bind(&DiretransServer::removeTimeoutConn, this));
     loop_.loop();
 }
 

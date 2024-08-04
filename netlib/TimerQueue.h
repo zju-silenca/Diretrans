@@ -28,8 +28,15 @@ public:
     TimerQueue(const TimerQueue&) = delete;
 
 private:
-    typedef std::pair<Timestamp, std::shared_ptr<Timer>> Entry;
-    typedef std::set<Entry> TimerList;
+    struct TimerComparator {
+        bool operator()(const std::pair<Timestamp, std::weak_ptr<Timer>>& lhs,
+                        const std::pair<Timestamp, std::weak_ptr<Timer>>& rhs) const {
+            // 仅比较 Timestamp 部分，忽略 weak_ptr
+            return lhs.first < rhs.first;
+        }
+    };
+    typedef std::pair<Timestamp, std::weak_ptr<Timer>> Entry;
+    typedef std::set<Entry, TimerComparator> TimerList;
 
     void addTimerInLoop(std::shared_ptr<Timer> timer);
 

@@ -43,6 +43,7 @@ private:
     void removeTimeoutConn();
     EventLoop loop_;
     RandomCode shareCodes_;
+    TimerId removeUnliveConnTimer_;
     std::unique_ptr<UdpCom> conn_;
     // 记录分享码对应的文件信息
     std::map<sharecode, FileDataAddr> fileDatas_;

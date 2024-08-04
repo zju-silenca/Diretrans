@@ -33,9 +33,13 @@ public:
     void quit();
     void runInLoop(const Functors& cb);
 
-    TimerId runAt(const Timestamp& time, const TimerCallback& cb);
-    TimerId runAfter(double delaySec, const TimerCallback& cb);
-    TimerId runEvery(double intervalSec, const TimerCallback& cb);
+    /*
+    TimerId must keep live when u want it work.
+    If u want cancel, just destroy TimerId.
+    */
+    [[nodiscard]] TimerId runAt(const Timestamp& time, const TimerCallback& cb);
+    [[nodiscard]] TimerId runAfter(double delaySec, const TimerCallback& cb);
+    [[nodiscard]] TimerId runEvery(double intervalSec, const TimerCallback& cb);
 
 private:
     void handleRead(); // weak up

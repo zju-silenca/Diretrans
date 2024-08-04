@@ -33,8 +33,7 @@ ConnManager::ConnManager(DiretransClient *client)
 
 ConnManager::~ConnManager()
 {
-    closeAllTimer();
-    heartBeatTimerId_.cancel();
+
 }
 
 void ConnManager::shareFile(Buffer &fileName)
@@ -224,7 +223,6 @@ void ConnManager::shareFileMsgHandle(UdpCom *conn, Buffer &buf, sockaddr &addr, 
         {
             state_ = WAIT_RECVER;
             closeAllTimer();
-            repeattimers_.clear();
         }
         break;
     case CHAT:
@@ -462,9 +460,5 @@ void ConnManager::sendRetranReq()
 
 void ConnManager::closeAllTimer()
 {
-    for (auto timerId = repeattimers_.begin();
-        timerId != repeattimers_.end(); ++timerId)
-    {
-        timerId->cancel();
-    }
+    repeattimers_.clear();
 }
