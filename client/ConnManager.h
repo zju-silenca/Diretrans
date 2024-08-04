@@ -52,6 +52,9 @@ private:
     TimerId heartBeatTimerId_;
     std::unique_ptr<GetFileManager> getManager_;
     std::unique_ptr<SendFileManager> sendManager_;
+    uint32_t recvWindow_;
+    uint32_t sendWindow_;
+    bool isWindowFull_;
 };
 
 #endif

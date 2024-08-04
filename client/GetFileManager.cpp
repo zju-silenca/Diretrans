@@ -23,7 +23,7 @@ GetFileManager::GetFileManager(FileData &data, uint32_t bytesPerPiece)
     if (fs::exists(filePath))
     {
         LOG("File %s exist in cur path.", fileName_.c_str());
-        return;
+        //return;
     }
 
     if (fileBytes_ > UINT32_MAX * bytesPerPiece)
@@ -95,7 +95,7 @@ WriteState GetFileManager::writeToFile(Buffer &data, uint32_t piece)
         ret = NONE;
     }
 
-    LOG("writtenBytes_: %u / %u, %.2f\%", writtenBytes_, fileBytes_, (1.0 * writtenBytes_ / fileBytes_) * 100.0);
+    LOG("writtenBytes_: %lu / %lu, %.3f%%", writtenBytes_, fileBytes_, (double)writtenBytes_ / (double)fileBytes_ * 100.0);
     if (writtenBytes_ == fileBytes_)
     {
         //assert(lossPieces_.size() == 0);

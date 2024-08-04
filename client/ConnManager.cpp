@@ -7,6 +7,9 @@
 
 using namespace std::placeholders;
 
+static const uint32_t kPiecesPerWindow = 100;
+static const uint32_t kWindowNum = 3;
+
 static uint16_t getRandomPort()
 {
     std::random_device rd;
@@ -23,7 +26,10 @@ ConnManager::ConnManager(DiretransClient *client)
     conn_(client_->getLoop(), getRandomPort()),
     state_(IDLE),
     code_(0),
-    serveraddr_(client_->getServerAddr())
+    serveraddr_(client_->getServerAddr()),
+    recvWindow_(0),
+    sendWindow_(0),
+    isWindowFull_(false)
 {
     while (!conn_.isBound())
     {
@@ -109,7 +115,7 @@ void ConnManager::shareFileMsgHandle(UdpCom *conn, Buffer &buf, sockaddr &addr, 
 {
     Header header = {0};
     static Buffer sendMsg; // 会被频繁调用，设为static防止资源反复释放
-    ShareCode code;
+    ShareCode code = {0};
     PeerAddr peerAddr = {0};
     uint8_t sign = 0;
     RetransPieces retranPieces = {0};
@@ -198,9 +204,28 @@ void ConnManager::shareFileMsgHandle(UdpCom *conn, Buffer &buf, sockaddr &addr, 
         state_ = CONN_RECVER;
         break;
     case DOWNLOAD_START:
+        if (state_ == SEND_FILE || state_ == CONN_RECVER)
+        {
+            state_ = SEND_FILE;
+            sendFileStream();
+        }
+        else
+        {
+            LOG("state error: %u", state_);
+        }
+        break;
+    case PACK_ACK:
         if (state_ == SEND_FILE)
         {
-            sendFileStream();
+            piecesPtr = (uint32_t*)(buf.peek() + sizeof(Header));
+            LOG("Recver ack %u pieces. Window is: %u", *piecesPtr, sendWindow_);
+            assert(*piecesPtr <= sendWindow_);
+            sendWindow_ -= *piecesPtr;
+            if (isWindowFull_)
+            {
+                isWindowFull_ = false;
+                sendFileStream();
+            }
         }
         break;
     case RETRAN:
@@ -222,6 +247,9 @@ void ConnManager::shareFileMsgHandle(UdpCom *conn, Buffer &buf, sockaddr &addr, 
         if (state_ == SEND_FILE)
         {
             state_ = WAIT_RECVER;
+            sendWindow_ = 0;
+            isWindowFull_ = false;
+            sendManager_->initStatu();
             closeAllTimer();
         }
         break;
@@ -339,6 +367,17 @@ void ConnManager::getFileMsgHandle(UdpCom *conn, Buffer &buf, sockaddr &addr, Ti
         buf.retrieve(sizeof(Header));
         dataStream = (DataStream*)(buf.peek());
         buf.retrieve(sizeof(DataStream));
+        ++recvWindow_;
+        if (recvWindow_ >= kPiecesPerWindow)
+        {
+            header.sign = kClientSign;
+            header.type = PACK_ACK;
+            header.dataLenth = sizeof(PackageAck);
+            sendMsg.append((char *)&header, sizeof(Header));
+            sendMsg.append((char *)&recvWindow_, sizeof(uint32_t));
+            recvWindow_ = 0;
+            conn_.send(sendMsg, recveraddr_);
+        }
         if (WRITE_FINISH == getManager_->writeToFile(buf, dataStream->pieceNum))
         {
             state_ = IDLE;
@@ -379,8 +418,9 @@ void ConnManager::sendFileStream()
     static Buffer sendMsg;
 
     sendMsg.retrieveAll();
-    if (!sendManager_->isGood())
+    if (!sendManager_->isGood() || sendWindow_ >= kPiecesPerWindow * kWindowNum)
     {
+        isWindowFull_ = true;
         return;
     }
     dataStream.pieceNum = sendManager_->getCurPieceNum();
@@ -392,6 +432,7 @@ void ConnManager::sendFileStream()
     sendMsg.append((char *)&dataStream, sizeof(DataStream));
     sendMsg.append(buf.peek(), buf.readableBytes());
     conn_.send(sendMsg, recveraddr_);
+    ++sendWindow_;
     client_->getLoop()->queueInLoop(std::bind(&ConnManager::sendFileStream, this));
 }
 
@@ -402,8 +443,10 @@ void ConnManager::sendLossPieces(std::vector<uint32_t> pieces)
     static Buffer sendMsg;
 
     sendMsg.retrieveAll();
-    if (!sendManager_->isOpen() || pieces.size() == 0)
+    if (!sendManager_->isOpen() || pieces.size() == 0 ||
+     sendWindow_ >= kPiecesPerWindow * kWindowNum)
     {
+        isWindowFull_ = true;
         return;
     }
     dataStream.pieceNum = pieces[pieces.size() - 1];
@@ -416,6 +459,7 @@ void ConnManager::sendLossPieces(std::vector<uint32_t> pieces)
     sendMsg.append((char *)&dataStream, sizeof(DataStream));
     sendMsg.append(buf.peek(), buf.readableBytes());
     conn_.send(sendMsg, recveraddr_);
+    ++sendWindow_;
     conn_.getLoop()->queueInLoop(std::bind(&ConnManager::sendLossPieces, this, pieces));
 }
 

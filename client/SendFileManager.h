@@ -20,6 +20,7 @@ public:
     void openFile(std::string filePath);
     bool isOpen() const { return ifileStream_.is_open(); }
     bool isGood() const { return ifileStream_.good(); }
+    void initStatu();
     std::string getFileName() const { return fileName_; }
     std::string getFilePath() const { return filePath_; }
     uint32_t getFileCRC32() const { return fileCRC32_; }

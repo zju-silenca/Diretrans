@@ -48,6 +48,16 @@ void SendFileManager::openFile(std::string filePath)
     return;
 }
 
+void SendFileManager::initStatu()
+{
+    if (!isGood())
+    {
+        ifileStream_.clear();
+    }
+    ifileStream_.seekg(std::ios::beg);
+    curPiece_ = 0;
+}
+
 Buffer SendFileManager::getNextPiece()
 {
     Buffer res;
