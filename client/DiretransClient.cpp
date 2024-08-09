@@ -48,20 +48,23 @@ void DiretransClient::movePendConn(int fd, sharecode code)
     pendingconns_.erase(conn);
 }
 
-void DiretransClient::closeConn(sharecode code)
+void DiretransClient::closeSendConn(sharecode code)
 {
     auto conn = sendconns_.find(code);
     if (conn != sendconns_.end())
     {
         deleteconns_.insert(std::move(conn->second));
     }
+    loop_.queueInLoop(std::bind(&DiretransClient::deleteConn, this));
+}
 
-    conn = getconns_.find(code);
+void DiretransClient::closeGetConn(sharecode code)
+{
+    auto conn = getconns_.find(code);
     if (conn != getconns_.end())
     {
         deleteconns_.insert(std::move(conn->second));
     }
-
     loop_.queueInLoop(std::bind(&DiretransClient::deleteConn, this));
 }
 
@@ -114,7 +117,7 @@ void DiretransClient::handleCmd()
     {
         Buffer fileName;
         fileName.append(cmds[1]);
-        auto conn = std::make_unique<ConnManager>(this);
+        auto conn = std::make_unique<SendConnManager>(this);
         int fd = conn->getFd();
         pendingconns_[fd] = std::move(conn);
         pendingconns_[fd]->shareFile(fileName);
@@ -126,7 +129,7 @@ void DiretransClient::handleCmd()
             LOG("Error share code.");
             return;
         }
-        auto conn = std::make_unique<ConnManager>(this);
+        auto conn = std::make_unique<GetConnManager>(this);
         getconns_[code] = std::move(conn);
         getconns_[code]->getFile(code);
     }else if ("CHAT" == cmds[0])
@@ -143,17 +146,6 @@ void DiretransClient::handleCmd()
             LOG("Input error code.");
         }
 
-        auto conn = getconns_.find(code);
-        if (conn == getconns_.end())
-        {
-            conn = sendconns_.find(code);
-            if (conn == sendconns_.end())
-            {
-                LOG("Not find this code.");
-                return;
-            }
-        }
-
         Buffer msg;
         auto space = std::string(" ");
         for (size_t i = 2; i < cmds.size(); ++i)
@@ -161,7 +153,22 @@ void DiretransClient::handleCmd()
             msg.append(cmds[i]);
             msg.append(space);
         }
-        conn->second->chatMsg(msg);
+        auto getconn = getconns_.find(code);
+        if (getconn == getconns_.end())
+        {
+            auto sendconn = sendconns_.find(code);
+            if (sendconn == sendconns_.end())
+            {
+                LOG("Not find this code.");
+                return;
+            }else
+            {
+                sendconn->second->chatMsg(msg);
+            }
+        }else
+        {
+            getconn->second->chatMsg(msg);
+        }
 
     } else
     {
