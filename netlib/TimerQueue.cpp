@@ -175,6 +175,6 @@ bool TimerQueue::insert(std::shared_ptr<Timer> timer)
 
     std::pair<TimerList::iterator, bool> result = 
         timers_.insert(std::make_pair(when, std::weak_ptr<Timer>(timer)));
-    assert(result.second);
+    assert(result.second); (void)result;
     return earliestChanged;
 }

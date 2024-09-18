@@ -37,7 +37,7 @@ int EPoller::poll(int timeoutMs, ChannelList *activeChannels)
 
     if (numEvents > 0)
     {
-        LOG("%d events happended.", numEvents);
+        //LOG("%d events happended.", numEvents);
         fillActiveChannels(numEvents, events, activeChannels);
     } else if (numEvents == 0)
     {

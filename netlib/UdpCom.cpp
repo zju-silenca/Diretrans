@@ -2,6 +2,7 @@
 #include "Log.h"
 #include "Channel.h"
 #include "Timestamp.h"
+#include "EventLoop.h"
 
 #include <string.h>
 #include <netinet/in.h>
@@ -79,20 +80,12 @@ void UdpCom::bindPort(uint16_t port)
     LOG("Bind socket port %u success.", port);
 }
 
-int UdpCom::send(const Buffer &buf, const sockaddr &target)
+void UdpCom::send(const Buffer &buf, const sockaddr &target)
 {
     assert(bound_ == true);
-    ssize_t n = ::sendto(sockfd_, buf.peek(), buf.readableBytes(), 0, &target, sizeof(target));
-    if (n == -1)
-    {
-        LOG("sendto return -1, error no: %d", errno);
-    }
-    if (n != static_cast<ssize_t>(buf.readableBytes()))
-    {
-        LOG("Sendto %lu bytes but buf have %lu bytes", n, buf.readableBytes());
-    }
-    LOG("Sendto %lu bytes", n);
-    return n;
+    //loop_->runInThreadPool(std::bind(&UdpCom::sendInThreadPool, this, buf, target));
+    // 使用线程池会降低吞吐量
+    sendInThreadPool(buf, target);
 }
 
 void UdpCom::handleRead()
@@ -110,7 +103,7 @@ void UdpCom::handleRead()
     }
     else
     {
-        LOG("recvfrom %ld bytes.", n);
+        //LOG("recvfrom %ld bytes.", n);
     }
     tmpbuf_.hasWritten(n);
     if (messageCallback_)
@@ -118,4 +111,20 @@ void UdpCom::handleRead()
         messageCallback_(this, tmpbuf_, sourceAddr, timestamp);
     }
     tmpbuf_.retrieveAll();
+}
+
+void UdpCom::sendInThreadPool(const Buffer &buf, const sockaddr &target)
+{
+    assert(bound_ == true);
+    ssize_t n = ::sendto(sockfd_, buf.peek(), buf.readableBytes(), 0, &target, sizeof(target));
+    if (n == -1)
+    {
+        LOG("sendto return -1, error no: %d", errno);
+    }
+    if (n != static_cast<ssize_t>(buf.readableBytes()))
+    {
+        LOG("Sendto %lu bytes but buf have %lu bytes", n, buf.readableBytes());
+    }
+    //LOG("Sendto %lu bytes", n);
+    return;
 }

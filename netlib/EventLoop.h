@@ -15,6 +15,7 @@ class Channel;
 class EPoller;
 class Timestamp;
 class TimerQueue;
+class ThreadPool;
 
 class EventLoop
 {
@@ -32,6 +33,7 @@ public:
     void queueInLoop(const Functors& cb);
     void quit();
     void runInLoop(const Functors& cb);
+    void runInThreadPool(const Functors& cb);
 
     /*
     TimerId must keep live when u want it work.
@@ -59,6 +61,7 @@ private:
     std::unique_ptr<Channel> wakeupChannel_;
     std::vector<Functors> pendingFunctors_;
     MutexLock mutex_;
+    std::unique_ptr<ThreadPool> threadPool_;
 };
 
 #endif

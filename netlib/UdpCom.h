@@ -25,7 +25,7 @@ public:
     bool isBound() { return bound_; }
     void bindPort(uint16_t port);
     uint16_t getPort() {return port_;}
-    int send(const Buffer& buf, const struct sockaddr& target);
+    void send(const Buffer& buf, const struct sockaddr& target);
     void setMessageCallback(const MessageCallback& cb) { messageCallback_ = cb;}
     EventLoop* getLoop() { return loop_; }
 
@@ -33,6 +33,7 @@ private:
 
     static const size_t kBufferSize = 65535;
     void handleRead();
+    void sendInThreadPool(const Buffer& buf, const struct sockaddr& target);
     MessageCallback messageCallback_;
     // closeCallback is no-need becauese udp is no-connection
     bool bound_;

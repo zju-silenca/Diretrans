@@ -4,6 +4,7 @@
 #include "TimerQueue.h"
 #include "TimerId.h"
 #include "Timer.h"
+#include "ThreadPool.h"
 #include <pthread.h>
 #include <cassert>
 #include <sys/eventfd.h>
@@ -31,7 +32,8 @@ EventLoop::EventLoop() :
     poller_(new EPoller(this)),
     timerQueue_(new TimerQueue(this)),
     wakeupFd_(createWakeupFd()),
-    wakeupChannel_(new Channel(this, wakeupFd_))
+    wakeupChannel_(new Channel(this, wakeupFd_)),
+    threadPool_(new ThreadPool(4))
 {
     LOG("EventLoop created %p in thread %d", this, threadId_);
 
@@ -70,7 +72,10 @@ void EventLoop::loop()
         {
             (*it)->handleEvent();
         }
-        doPendingFunctors();
+        if (!pendingFunctors_.empty())
+        {
+            doPendingFunctors();
+        }
     }
 
     LOG("EventLoop %p stop.", this);
@@ -132,6 +137,11 @@ void EventLoop::runInLoop(const Functors &cb)
     {
         queueInLoop(cb);
     }
+}
+
+void EventLoop::runInThreadPool(const Functors &cb)
+{
+    threadPool_->addTask(cb);
 }
 
 TimerId EventLoop::runAt(const Timestamp &time, const TimerCallback &cb)
